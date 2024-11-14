@@ -51,7 +51,7 @@ class TestMatrix(unittest.TestCase):
         self.assertEqual(self.mat.data, [[1, 2, 3], [4, 5, 6], [7, 8, 9]])
 
     def test_matmul(self):
-        out  = self.mat @ self.other
+        out = self.mat @ self.other
         self.assertEqual(out.data, [[48, 54, 60], [111, 126, 141], [174, 198, 222]])
 
     def test_matmul_rectangle(self):

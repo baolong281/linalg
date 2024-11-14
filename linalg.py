@@ -136,6 +136,7 @@ class Matrix:
         """
         Indexing for matrix like numpy
         """
+
         def adjust_slice(s, max_val):
             if s.start is not None and s.start < 0:
                 raise ValueError("Negative indexing not supported")
@@ -145,21 +146,45 @@ class Matrix:
             stop = s.stop if s.stop is not None else max_val
             return slice(start, stop)
 
-        if isinstance(key, tuple) and isinstance(key[0], int) and isinstance(key[1], int):
+        if (
+            isinstance(key, tuple)
+            and isinstance(key[0], int)
+            and isinstance(key[1], int)
+        ):
             return Matrix([self.data[key[0]][key[1]]], rows=1)
         elif isinstance(key, int):
             return Matrix(self.data[key], rows=1)
         elif isinstance(key, slice):
             key = adjust_slice(key, self.rows)
-            return Matrix([n for row in self.data[key] for n in row], rows=key.stop - key.start)
-        elif isinstance(key, tuple) and isinstance(key[0], slice) and isinstance(key[1], slice):
+            return Matrix(
+                [n for row in self.data[key] for n in row], rows=key.stop - key.start
+            )
+        elif (
+            isinstance(key, tuple)
+            and isinstance(key[0], slice)
+            and isinstance(key[1], slice)
+        ):
             rslice = adjust_slice(key[0], self.rows)
             cslice = adjust_slice(key[1], self.cols)
-            return Matrix([n for row in self.data[rslice] for n in row[cslice]], rows=rslice.stop - rslice.start)
-        elif isinstance(key, tuple) and isinstance(key[0], slice) and isinstance(key[1], int):
+            return Matrix(
+                [n for row in self.data[rslice] for n in row[cslice]],
+                rows=rslice.stop - rslice.start,
+            )
+        elif (
+            isinstance(key, tuple)
+            and isinstance(key[0], slice)
+            and isinstance(key[1], int)
+        ):
             rslice = adjust_slice(key[0], self.rows)
-            return Matrix([row[key[1]] for row in self.data[rslice]], rows=rslice.stop - rslice.start)
-        elif isinstance(key, tuple) and isinstance(key[0], int) and isinstance(key[1], slice):
+            return Matrix(
+                [row[key[1]] for row in self.data[rslice]],
+                rows=rslice.stop - rslice.start,
+            )
+        elif (
+            isinstance(key, tuple)
+            and isinstance(key[0], int)
+            and isinstance(key[1], slice)
+        ):
             cslice = adjust_slice(key[1], self.cols)
             return Matrix([n for n in self.data[key[0]][cslice]], rows=1)
         else:
@@ -201,7 +226,6 @@ class Matrix:
 
         return curr_mat, other_mat
 
-
     def __matmul__(self, other):
         """
         Matrix multiplication with @ operator
@@ -239,19 +263,21 @@ class Matrix:
             return a, b, c, d
 
         def multiply_2x2(a, b):
-            return Matrix([
-                a.data[0][0] * b.data[0][0] + a.data[0][1] * b.data[1][0],
-                a.data[0][0] * b.data[0][1] + a.data[0][1] * b.data[1][1],
-                a.data[1][0] * b.data[0][0] + a.data[1][1] * b.data[1][0],
-                a.data[1][0] * b.data[0][1] + a.data[1][1] * b.data[1][1],
-            ], rows=2)
+            return Matrix(
+                [
+                    a.data[0][0] * b.data[0][0] + a.data[0][1] * b.data[1][0],
+                    a.data[0][0] * b.data[0][1] + a.data[0][1] * b.data[1][1],
+                    a.data[1][0] * b.data[0][0] + a.data[1][1] * b.data[1][0],
+                    a.data[1][0] * b.data[0][1] + a.data[1][1] * b.data[1][1],
+                ],
+                rows=2,
+            )
 
         def strassen(mat1, mat2):
             if mat1.rows == 2 and mat2.rows == 2:
                 return multiply_2x2(mat1, mat2)
             if mat1.rows == 2 and mat2.rows == 1:
                 return Matrix([mat1.data[0][0] * mat2.data[0][0]], rows=1)
-
 
             a, b, c, d = split(mat1)
             e, f, g, h = split(mat2)
@@ -262,10 +288,10 @@ class Matrix:
             bottomright = strassen(c, f) + strassen(d, h)
 
             return merge_quadrants(topleft, topright, bottomleft, bottomright)
-            
+
         out = strassen(curr_mat, other_mat)
         # we have to crop the matrix to the correct size cause the padding
-        return out[:self.rows, :other.cols]
+        return out[: self.rows, : other.cols]
 
     def __eq__(self, other):
         """
