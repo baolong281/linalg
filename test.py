@@ -51,8 +51,12 @@ class TestMatrix(unittest.TestCase):
         self.assertEqual(self.mat.data, [[1, 2, 3], [4, 5, 6], [7, 8, 9]])
 
     def test_matmul(self):
-        product = self.mat @ self.other
-        self.assertEqual(product.data, [[48, 54, 60], [111, 126, 141], [174, 198, 222]])
+        out  = self.mat @ self.other
+        self.assertEqual(out.data, [[48, 54, 60], [111, 126, 141], [174, 198, 222]])
+
+    def test_matmul_rectangle(self):
+        out = self.rectangular @ self.other
+        self.assertEqual(out.data, [[48, 54, 60], [111, 126, 141]])
 
     def test_matmul_lu(self):
         L, U = self.mat.lu_decomp()
@@ -134,6 +138,12 @@ class TestMatrix(unittest.TestCase):
     def test_rref(self):
         out, _ = self.mat.gaussian_elimination(rref=True)
         self.assertEqual(out.data, [[1, 0, -1], [0, 1, 2], [0, 0, 0]])
+
+    def test_indexing(self):
+        self.assertEqual(self.mat[0], linalg.Matrix([1, 2, 3], rows=1))
+        self.assertEqual(self.mat[1], linalg.Matrix([4, 5, 6], rows=1))
+        self.assertEqual(self.mat[2], linalg.Matrix([7, 8, 9], rows=1))
+        self.assertEqual(self.mat[0:2], linalg.Matrix([1, 2, 3, 4, 5, 6], rows=2))
 
 
 if __name__ == "__main__":
