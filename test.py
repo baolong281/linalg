@@ -2,6 +2,7 @@ import linalg
 import math
 import unittest
 
+
 # these all pass
 class TestVec3(unittest.TestCase):
     def test_add(self):
@@ -49,7 +50,6 @@ class TestMatrix(unittest.TestCase):
         self.assertEqual(self.mat.cols, 3)
         self.assertEqual(self.mat.data, [[1, 2, 3], [4, 5, 6], [7, 8, 9]])
 
-
     def test_matmul(self):
         product = self.mat @ self.other
         self.assertEqual(product.data, [[48, 54, 60], [111, 126, 141], [174, 198, 222]])
@@ -66,7 +66,6 @@ class TestMatrix(unittest.TestCase):
     def test_sub(self):
         res = self.mat + self.other
         self.assertEqual(res.data, [[5, 7, 9], [11, 13, 15], [17, 19, 21]])
-
 
     def test_scalar_mul(self):
         res = self.mat * 2
@@ -86,12 +85,14 @@ class TestMatrix(unittest.TestCase):
     def test_inverse(self):
         self.assertRaises(ValueError, self.mat.inverse)
         mat = linalg.Matrix([1, 2, 3, 4, 5, 6, 7, 2, 9], rows=3)
-        exp_inv = linalg.Matrix([-11/12, 1/3, 1/12, -1/6, 1/3, -1/6, 3/4, -1/3, 1/12], rows=3)
+        exp_inv = linalg.Matrix(
+            [-11 / 12, 1 / 3, 1 / 12, -1 / 6, 1 / 3, -1 / 6, 3 / 4, -1 / 3, 1 / 12],
+            rows=3,
+        )
 
         for i in range(mat.rows):
             for j in range(mat.cols):
                 self.assertAlmostEqual(mat.inverse().data[i][j], exp_inv.data[i][j])
-
 
     def test_det(self):
         self.assertEqual(self.mat.det(), 0)
@@ -99,7 +100,6 @@ class TestMatrix(unittest.TestCase):
 
         mat = linalg.Matrix([1, 2, 3, 4, 5, 6, 7, 8, 3, 2, 3, 2, 3, 1, 7, 8], rows=4)
         self.assertEqual(mat.det(), -24)
-
 
     def test_lu_decomp(self):
         L, U = self.mat.lu_decomp()
@@ -109,8 +109,12 @@ class TestMatrix(unittest.TestCase):
     def test_lu_decomp2(self):
         mat = linalg.Matrix([1, 2, 3, 4, 5, 6, 7, 8, 3, 2, 3, 2, 3, 1, 7, 8], rows=4)
         L, U = mat.lu_decomp()
-        exp_L = linalg.Matrix([1, 0, 0, 0, 5, 1, 0, 0, 3, 1, 1, 0, 3, 5/4, 4, 1], rows=4)
-        exp_U = linalg.Matrix([1, 2, 3, 4, 0, -4, -8, -12, 0, 0, 2, 2, 0, 0, 0, 3], rows=4)
+        exp_L = linalg.Matrix(
+            [1, 0, 0, 0, 5, 1, 0, 0, 3, 1, 1, 0, 3, 5 / 4, 4, 1], rows=4
+        )
+        exp_U = linalg.Matrix(
+            [1, 2, 3, 4, 0, -4, -8, -12, 0, 0, 2, 2, 0, 0, 0, 3], rows=4
+        )
         self.assertEqual(L.data, exp_L.data)
         self.assertEqual(U.data, exp_U.data)
 
@@ -119,17 +123,17 @@ class TestMatrix(unittest.TestCase):
         self.assertEqual(I.data, [[1, 0, 0], [0, 1, 0], [0, 0, 1]])
 
     def test_elim_step(self):
-        step  = linalg.EliminationStep(0, 2, 4)
+        step = linalg.EliminationStep(0, 2, 4)
         self.mat.elim_step(step)
-        self.assertEqual(self.mat.data, [[1, 2, 3], [4, 5, 6], [3,0, -3]])
+        self.assertEqual(self.mat.data, [[1, 2, 3], [4, 5, 6], [3, 0, -3]])
 
     def test_gaussian_elimination(self):
         out, _ = self.mat.gaussian_elimination()
-        self.assertEqual(out.data, [[1, 2, 3], [0, -3, -6], [0,0, 0]])
+        self.assertEqual(out.data, [[1, 2, 3], [0, -3, -6], [0, 0, 0]])
 
     def test_rref(self):
         out, _ = self.mat.gaussian_elimination(rref=True)
-        self.assertEqual(out.data, [[1, 0, -1], [0, 1, 2], [0,0, 0]])
+        self.assertEqual(out.data, [[1, 0, -1], [0, 1, 2], [0, 0, 0]])
 
 
 if __name__ == "__main__":

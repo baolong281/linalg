@@ -1,6 +1,7 @@
 from collections import deque
 from typing import List, Tuple
 
+
 class Vec3:
     """
     3D Vector class
@@ -83,6 +84,7 @@ class Vec3:
         len = self.length()
         return Vec3(self.x / len, self.y / len, self.z / len)
 
+
 class EliminationStep:
     def __init__(self, pivot_row, other_row, multiplier, div=False):
         self.multiplier = multiplier
@@ -93,6 +95,7 @@ class EliminationStep:
     def __str__(self):
         return f"EliminationStep(pivot={self.pivot_row}, target={self.other_row}, c={self.multiplier})"
 
+
 class DecompStep:
     def __init__(self, row, col, value):
         self.row = row
@@ -101,6 +104,7 @@ class DecompStep:
 
     def __str__(self):
         return f"DecompStep(row={self.row}, col={self.col}, value={self.value})"
+
 
 class Matrix:
     def __init__(self, data: List[int | float], rows: int = 0):
@@ -170,15 +174,14 @@ class Matrix:
 
         return out
 
-
     # do this later
     def __sub__(self, other):
         if not isinstance(other, Matrix):
             raise TypeError("Can only subtract a Matrix from another Matrix")
         if self.rows != other.rows or self.cols != other.cols:
             raise ValueError("Matrices must be the same size")
-            
-        return self + (other * - 1)
+
+        return self + (other * -1)
 
     # scalar mul do later
     def __mul__(self, other):
@@ -205,7 +208,9 @@ class Matrix:
 
         return out
 
-    def gaussian_elimination(self, rref=False) -> Tuple[any, List[EliminationStep | DecompStep]]:
+    def gaussian_elimination(
+        self, rref=False
+    ) -> Tuple[any, List[EliminationStep | DecompStep]]:
         """
         Do gaussian elimination and returna  new matrix and a list of decomp steps.
         Does not return RREF.
@@ -256,10 +261,12 @@ class Matrix:
         for pivot in range(out.cols):
             val = out.data[pivot][pivot]
 
-            if val == 0: continue
+            if val == 0:
+                continue
 
             for row in range(out.rows):
-                if row == pivot: continue
+                if row == pivot:
+                    continue
                 factor = out.data[row][pivot] / val
                 elim_step = EliminationStep(pivot, row, factor)
 
@@ -271,19 +278,22 @@ class Matrix:
 
         return out, steps
 
-
     def elim_step(self, elim_step: EliminationStep):
         """
         Apply a single elimination step to the matrix
         """
-        if elim_step.pivot_row not in range(self.rows) or elim_step.other_row not in range(self.rows):
+        if elim_step.pivot_row not in range(
+            self.rows
+        ) or elim_step.other_row not in range(self.rows):
             raise ValueError("Invalid row index in EliminationStep")
 
         for i in range(self.cols):
             if elim_step.div:
                 self.data[elim_step.pivot_row][i] /= elim_step.multiplier
             else:
-                self.data[elim_step.other_row][i] -= self.data[elim_step.pivot_row][i] * elim_step.multiplier
+                self.data[elim_step.other_row][i] -= (
+                    self.data[elim_step.pivot_row][i] * elim_step.multiplier
+                )
 
     def apply_elim_steps(self, steps: List[EliminationStep]):
         """
@@ -314,13 +324,11 @@ class Matrix:
         L = I.apply_decomp_steps(decomp_steps)
         return L, U
 
-
     def copy(self):
         """
         Create a copy of the matrix
         """
         return Matrix([n for row in self.data for n in row], rows=self.rows)
-
 
     # do later
     # determinant of matrix
@@ -357,7 +365,7 @@ class Matrix:
         Create a matrix of zeros
         """
         return cls([0] * (rows * cols), rows=rows)
-    
+
     @classmethod
     def identity(cls, rows):
         """
