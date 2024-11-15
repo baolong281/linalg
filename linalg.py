@@ -72,6 +72,9 @@ class Vec3:
         return (self.x**2 + self.y**2 + self.z**2) ** 0.5
 
     def cross(self, other):
+        """
+        Standard cross product for 3d vectors
+        """
         if not isinstance(other, Vec3):
             raise TypeError("Can only cross a Vec3 with another Vec3")
         return Vec3(
@@ -86,6 +89,9 @@ class Vec3:
 
 
 class EliminationStep:
+    """
+    Class for an elimination step
+    """
     def __init__(self, pivot_row, other_row, multiplier, div=False):
         self.multiplier = multiplier
         self.pivot_row = pivot_row
@@ -97,6 +103,9 @@ class EliminationStep:
 
 
 class DecompStep:
+    """
+    Class for a decomposition step needed for LU decomposition
+    """
     def __init__(self, row, col, value):
         self.row = row
         self.col = col
@@ -191,17 +200,26 @@ class Matrix:
             raise TypeError("Invalid index type")
 
     def pad_bottom(self, rows):
+        """
+        Pad the matrix with zeros on the bottom, needed for strassen's algorithm
+        """
         new_data = [n for row in self.data for n in row]
         new_data.extend([0] * (self.cols * rows))
         out = Matrix(new_data, rows=self.rows + rows)
         return out
 
     def pad_right(self, cols):
+        """
+        Pad with zeroes on the right
+        """
         new_data = [n for row in self.data for n in row + ([0] * cols)]
         out = Matrix(new_data, rows=self.rows)
         return out
 
     def __padding_strassen(self, other):
+        """
+        Pad two matrices to make them square and divisble by 2
+        """
         curr_mat = self.copy()
         other_mat = other.copy()
         # if the matrix is not square, we need to pad it with zeros
@@ -230,7 +248,7 @@ class Matrix:
         """
         Matrix multiplication with @ operator
         i.e. mat @ mat2
-        Naive implementation
+        Strassen's algorithm
         """
 
         if self.cols != other.rows:
@@ -238,6 +256,7 @@ class Matrix:
 
         curr_mat, other_mat = self.__padding_strassen(other)
 
+        # helper to merge quadrants into a single matrix
         def merge_quadrants(a, b, c, d):
             m = a.rows
             n = a.cols
@@ -253,6 +272,7 @@ class Matrix:
 
             return out
 
+        # split into 4 quadrants
         def split(mat):
             half_col = mat.cols // 2
             half_row = mat.rows // 2
@@ -273,6 +293,7 @@ class Matrix:
                 rows=2,
             )
 
+        # recursive function to do strassen's algorithm
         def strassen(mat1, mat2):
             if mat1.rows == 2 and mat2.rows == 2:
                 return multiply_2x2(mat1, mat2)
@@ -372,11 +393,14 @@ class Matrix:
         steps = []
         q = deque()
 
-        out = Matrix([n for row in self.data for n in row], rows=self.rows)
+        # Operate on a copy of the matrix
+        out = self.copy()
 
+        # Eliminate under for each pivot
         for pivot in range(out.cols):
             val = out.data[pivot][pivot]
 
+            # Get the step to eliminate for each row
             for row in range(pivot + 1, out.rows):
                 factor = out.data[row][pivot] / val
 
@@ -388,9 +412,11 @@ class Matrix:
                 else:
                     steps.append(DecompStep(row, pivot, factor))
 
+            # Do steps in order from the queue
             while q:
                 out.elim_step(q.popleft())
 
+        # Do rref if we want it
         if rref:
             self.__rref(out, steps, q)
 
