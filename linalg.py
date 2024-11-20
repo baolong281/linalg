@@ -138,8 +138,8 @@ class Matrix:
         self.data = matrix_data
 
     def __str__(self):
-        mat_data = "\n".join([f"{row}" for row in self.data])
-        return f"Matrix({mat_data}, rows={self.rows})"
+        mat_data = ("\n" + " " * 7).join([f"[{', '.join([f'{(x+0):0.3f}' for x in row])}]" for row in self.data])
+        return f"Matrix({mat_data}, rows={self.rows}, cols={self.cols})"
 
     def __getitem__(self, key):
         """
@@ -222,27 +222,34 @@ class Matrix:
         """
         curr_mat = self.copy()
         other_mat = other.copy()
-        # if the matrix is not square, we need to pad it with zeros
-        if curr_mat.rows % 2 != 0:
-            curr_mat = curr_mat.pad_bottom(1)
-        if other.rows % 2 != 0:
-            other_mat = other_mat.pad_bottom(1)
 
-        if curr_mat.cols % 2 != 0:
-            curr_mat = curr_mat.pad_right(1)
-        if other.cols % 2 != 0:
-            other_mat = other_mat.pad_right(1)
+        # get the next power of 2 for the matrix dimensions
+        def next_square_power_of_two(rows, cols):
+            max_dim = max(rows, cols)
+            
+            # saw this on google idk how this works
+            target_dim = 2 ** ((max_dim-1).bit_length())
+            
+            return target_dim
 
-        if curr_mat.rows < other_mat.rows:
-            curr_mat = curr_mat.pad_bottom(other_mat.rows - curr_mat.rows)
-        if other_mat.rows < curr_mat.rows:
-            other_mat = other_mat.pad_bottom(curr_mat.rows - other_mat.rows)
-        if curr_mat.cols < other_mat.cols:
-            curr_mat = curr_mat.pad_right(other_mat.cols - curr_mat.cols)
-        if other_mat.cols < curr_mat.cols:
-            other_mat = other_mat.pad_right(curr_mat.cols - other_mat.cols)
-
+        target_dim = next_square_power_of_two(
+            curr_mat.rows, curr_mat.cols
+        )
+        
+        # pad the current matrix
+        if curr_mat.rows < target_dim:
+            curr_mat = curr_mat.pad_bottom(target_dim - curr_mat.rows)
+        if curr_mat.cols < target_dim:
+            curr_mat = curr_mat.pad_right(target_dim - curr_mat.cols)
+        
+        # pad the other matrix
+        if other_mat.rows < target_dim:
+            other_mat = other_mat.pad_bottom(target_dim - other_mat.rows)
+        if other_mat.cols < target_dim:
+            other_mat = other_mat.pad_right(target_dim - other_mat.cols)
+        
         return curr_mat, other_mat
+
 
     def __matmul__(self, other):
         """
@@ -253,8 +260,6 @@ class Matrix:
 
         if self.cols != other.rows:
             raise ValueError("Matrix dimensions must be compatible")
-
-        curr_mat, other_mat = self.__padding_strassen(other)
 
         # helper to merge quadrants into a single matrix
         def merge_quadrants(a, b, c, d):
@@ -281,38 +286,40 @@ class Matrix:
             c = mat[half_row:, :half_col]
             d = mat[half_row:, half_col:]
             return a, b, c, d
-
-        def multiply_2x2(a, b):
-            return Matrix(
-                [
-                    a.data[0][0] * b.data[0][0] + a.data[0][1] * b.data[1][0],
-                    a.data[0][0] * b.data[0][1] + a.data[0][1] * b.data[1][1],
-                    a.data[1][0] * b.data[0][0] + a.data[1][1] * b.data[1][0],
-                    a.data[1][0] * b.data[0][1] + a.data[1][1] * b.data[1][1],
-                ],
-                rows=2,
-            )
-
         # recursive function to do strassen's algorithm
-        def strassen(mat1, mat2):
-            if mat1.rows == 2 and mat2.rows == 2:
-                return multiply_2x2(mat1, mat2)
-            if mat1.rows == 2 and mat2.rows == 1:
-                return Matrix([mat1.data[0][0] * mat2.data[0][0]], rows=1)
+        def strassen(curr_mat, other_mat):
+
+            mat1, mat2 = curr_mat.__padding_strassen(other_mat)
+
+
+            # base case for small matrices or when dimensions don't allow splitting
+            if (mat1.rows <= 2 or mat2.cols <= 2) and (mat1.cols <= 2 or mat2.rows <= 2):
+                result_data = []
+                # print(mat1)
+                # print(mat2)
+                for i in range(mat1.rows):
+                    for j in range(mat2.cols):
+                        cell_value = 0
+                        for k in range(mat1.cols):
+                            cell_value += mat1.data[i][k] * mat2.data[k][j]
+                        result_data.append(cell_value)
+                return Matrix(result_data, rows=mat1.rows)
 
             a, b, c, d = split(mat1)
             e, f, g, h = split(mat2)
+
 
             topleft = strassen(a, e) + strassen(b, g)
             topright = strassen(a, f) + strassen(b, h)
             bottomleft = strassen(c, e) + strassen(d, g)
             bottomright = strassen(c, f) + strassen(d, h)
 
-            return merge_quadrants(topleft, topright, bottomleft, bottomright)
+            merged = merge_quadrants(topleft, topright, bottomleft, bottomright)
+            return merged[: curr_mat.rows, : other_mat.cols]
 
-        out = strassen(curr_mat, other_mat)
+        out = strassen(self.copy(), other.copy())
         # we have to crop the matrix to the correct size cause the padding
-        return out[: self.rows, : other.cols]
+        return out
 
     def __eq__(self, other):
         """
